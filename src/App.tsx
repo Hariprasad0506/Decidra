@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BacklogSummary } from './components/BacklogSummary'
 import { BacklogTable } from './components/BacklogTable'
 import { FeatureForm } from './components/FeatureForm'
 import { FeatureInsights } from './components/FeatureInsights'
 import { RiceExplainer } from './components/RiceExplainer'
+import { SaveAndExport } from './components/SaveAndExport'
 import { sampleFeatures } from './data/sampleFeatures'
 import { rankByRice } from './riceScoring'
 import type { RankedItem } from './riceScoring'
@@ -12,26 +13,65 @@ import { finalPriority, orderByFinalPriority, samePriorityAs } from './pmDecisio
 import type { PmDecision } from './pmDecision'
 import { confidenceSensitivity } from './sensitivity'
 import { emptyFormValues, featureToFormValues, formatFeatureId } from './featureValidation'
+import { browserStorage, loadState, saveState } from './storage'
+import type { LoadResult } from './storage'
+import { buildCsv, csvFileName, downloadCsv } from './csvExport'
+import { buildStakeholderSummary } from './stakeholderSummary'
 import type { Feature } from './types'
 
 // Which form is open: none, a blank "add" form, or an "edit" form for one feature.
 type FormState = { mode: 'closed' } | { mode: 'add' } | { mode: 'edit'; id: string }
 type SortMode = 'suggested' | 'final'
 
+// Reads the saved backlog once, when the page first loads.
+function readInitialState(): { loaded: LoadResult; features: Feature[]; decisions: Record<string, PmDecision>; nextIdNumber: number } {
+  const loaded = loadState(browserStorage())
+  if (loaded.status === 'restored') return { loaded, ...loaded.state }
+  // Nothing saved (or it could not be read): start from the GymBuddy sample data.
+  return { loaded, features: sampleFeatures, decisions: {}, nextIdNumber: sampleFeatures.length + 1 }
+}
+
+function startupMessage(loaded: LoadResult): string {
+  if (loaded.status === 'unreadable') return loaded.message
+  if (loaded.status === 'restored' && loaded.skipped > 0) {
+    return `Restored your saved backlog. ${loaded.skipped} saved ${loaded.skipped === 1 ? 'feature was' : 'features were'} damaged and left out.`
+  }
+  return ''
+}
+
 function App() {
-  // The feature list lives in React state for now. It resets when the page reloads;
-  // saving in the browser arrives in a later phase.
-  const [features, setFeatures] = useState<Feature[]>(sampleFeatures)
+  const [initial] = useState(readInitialState)
+  // The feature list and decisions are saved in this browser whenever they change (see below).
+  const [features, setFeatures] = useState<Feature[]>(initial.features)
   // Running counter for new IDs, so a deleted feature's ID is never handed out again.
-  const [nextIdNumber, setNextIdNumber] = useState(sampleFeatures.length + 1)
+  const [nextIdNumber, setNextIdNumber] = useState(initial.nextIdNumber)
   const [form, setForm] = useState<FormState>({ mode: 'closed' })
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(() => startupMessage(initial.loaded))
   // The feature waiting for the user to confirm deletion, if any.
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   // The PM's decisions, kept apart from the features so the RICE inputs are never changed by them.
-  const [decisions, setDecisions] = useState<Record<string, PmDecision>>({})
+  const [decisions, setDecisions] = useState<Record<string, PmDecision>>(initial.decisions)
   const [reviewId, setReviewId] = useState<string | null>(null)
   const [sortMode, setSortMode] = useState<SortMode>('suggested')
+  const [saveWarning, setSaveWarning] = useState(() =>
+    browserStorage() ? '' : 'This browser is blocking saved data, so changes will be lost on reload.',
+  )
+
+  // Save whenever the backlog or decisions change. The first run is skipped while nothing has
+  // changed yet, so simply opening the page never overwrites what is saved.
+  const loadedRef = useRef(initial)
+  useEffect(() => {
+    const start = loadedRef.current
+    if (
+      features === start.features &&
+      decisions === start.decisions &&
+      nextIdNumber === start.nextIdNumber
+    ) {
+      return
+    }
+    const result = saveState(browserStorage(), { features, decisions, nextIdNumber })
+    setSaveWarning(result.ok ? '' : result.message)
+  }, [features, decisions, nextIdNumber])
 
   // Scores and ranks are worked out fresh from the list on every change, so they are never stale.
   const rankedFeatures = rankByRice(features)
@@ -113,6 +153,28 @@ function App() {
         onDecide={(next) => handleDecide(id, next)}
       />
     )
+  }
+
+  function handleExportCsv() {
+    const ok = downloadCsv(buildCsv(features, decisions), csvFileName(new Date()))
+    setMessage(
+      ok
+        ? 'Exported the backlog as a CSV file. Check your downloads. If no file appears, this page is blocking downloads, so open the app in a normal browser tab.'
+        : 'The browser would not start the download. Try again in a normal browser tab.',
+    )
+  }
+
+  function handleReset() {
+    // Fresh copies, so the change is always saved, even when the page started with the demo data.
+    setFeatures([...sampleFeatures])
+    setDecisions({})
+    setNextIdNumber(sampleFeatures.length + 1)
+    setForm({ mode: 'closed' })
+    setConfirmDeleteId(null)
+    setReviewId(null)
+    setSortMode('suggested')
+    setMessage('Reset to the GymBuddy demo data.')
+    document.getElementById('backlog-heading')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   function handleDelete(id: string) {
@@ -239,9 +301,17 @@ function App() {
             onDelete={handleDelete}
           />
         </section>
+
+        <SaveAndExport
+          saveWarning={saveWarning}
+          summary={buildStakeholderSummary(features, decisions)}
+          featureCount={features.length}
+          onExportCsv={handleExportCsv}
+          onReset={handleReset}
+        />
       </main>
 
-      <footer className="site-footer muted">Decidra · Phase 4 preview</footer>
+      <footer className="site-footer muted">Decidra · Phase 5 preview</footer>
     </div>
   )
 }
