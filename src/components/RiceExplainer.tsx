@@ -20,6 +20,10 @@ export function RiceExplainer() {
           <span className="formula-divider" aria-hidden="true" />
           <span>Effort</span>
         </p>
+        <p className="formula-example muted">
+          Confidence is used as a decimal, so 80% becomes 0.8. Example: 1,000 users × 2 impact ×
+          0.8 confidence ÷ 2 person-months = <strong>800</strong>.
+        </p>
       </div>
       <dl className="rice-grid">
         {factors.map((factor) => (

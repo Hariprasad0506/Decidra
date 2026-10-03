@@ -4,7 +4,7 @@ export type ImpactValue = 3 | 2 | 1 | 0.5 | 0.25
 export type ConfidenceValue = 100 | 80 | 50
 
 // A single product idea in the backlog, with the four RICE inputs.
-// The RICE score itself is calculated in a later phase.
+// The RICE score is not stored; it is calculated from these inputs in riceScoring.ts.
 export interface Feature {
   id: string
   name: string

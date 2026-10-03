@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { validateFeatureForm } from '../featureValidation'
+import { riceInputsFromForm, validateFeatureForm } from '../featureValidation'
 import type { FeatureFormErrors, FeatureFormValues } from '../featureValidation'
+import { calculateRice, formatBreakdown } from '../riceScoring'
 import { CONFIDENCE_OPTIONS, IMPACT_OPTIONS, REACH_PERIOD, STATUS_OPTIONS } from '../riceOptions'
 import type { Feature } from '../types'
 
@@ -78,6 +79,10 @@ export function FeatureForm({ mode, featureId, initialValues, onSave, onCancel }
   }
 
   const title = mode === 'add' ? 'Add a feature' : 'Edit feature'
+
+  // Live RICE score, recalculated on every keystroke.
+  const riceInputs = riceInputsFromForm(values)
+  const preview = riceInputs ? calculateRice(riceInputs) : null
 
   return (
     <form
@@ -218,6 +223,15 @@ export function FeatureForm({ mode, featureId, initialValues, onSave, onCancel }
           {errorFor('dependencyNote')}
         </div>
       </div>
+
+      <p className="score-preview" aria-live="polite">
+        <span className="score-preview-label">RICE score</span>
+        {preview?.ok ? (
+          <span className="score-preview-value">{formatBreakdown(preview)}</span>
+        ) : (
+          <span className="muted">Fill in Reach, Impact, Confidence and Effort to see the score.</span>
+        )}
+      </p>
 
       <div className="form-actions">
         <button type="button" className="button-secondary" onClick={onCancel}>

@@ -1,4 +1,5 @@
 import { CONFIDENCE_OPTIONS, IMPACT_OPTIONS } from './riceOptions'
+import type { RiceInputs } from './riceScoring'
 import type { ConfidenceValue, Feature, ImpactValue } from './types'
 
 // What the form holds while the user is typing. Everything is text until it is checked.
@@ -119,6 +120,21 @@ export function validateFeatureForm(
       evidenceNote: values.evidenceNote.trim(),
       dependencyNote: values.dependencyNote.trim(),
     },
+  }
+}
+
+// Reads the four RICE inputs from the form while the user types, for the live score preview.
+// Returns null until all four are filled in correctly.
+export function riceInputsFromForm(values: FeatureFormValues): RiceInputs | null {
+  if (checkReach(values.reach) || checkEffort(values.effort)) return null
+  const impact = IMPACT_OPTIONS.find((o) => String(o.value) === values.impact)
+  const confidence = CONFIDENCE_OPTIONS.find((o) => String(o.value) === values.confidence)
+  if (!impact || !confidence) return null
+  return {
+    reach: Number(values.reach.trim()),
+    impact: impact.value,
+    confidence: confidence.value,
+    effort: Number(values.effort.trim()),
   }
 }
 

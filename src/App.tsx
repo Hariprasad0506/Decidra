@@ -4,6 +4,7 @@ import { BacklogTable } from './components/BacklogTable'
 import { FeatureForm } from './components/FeatureForm'
 import { RiceExplainer } from './components/RiceExplainer'
 import { sampleFeatures } from './data/sampleFeatures'
+import { rankByRice } from './riceScoring'
 import { emptyFormValues, featureToFormValues, formatFeatureId } from './featureValidation'
 import type { Feature } from './types'
 
@@ -20,6 +21,11 @@ function App() {
   const [message, setMessage] = useState('')
   // The feature waiting for the user to confirm deletion, if any.
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+
+  // Scores and ranks are worked out fresh from the list on every change, so they are never stale.
+  const rankedFeatures = rankByRice(features)
+  const scoredCount = rankedFeatures.filter((entry) => entry.rank !== null).length
+  const topFeature = rankedFeatures[0]?.rank === 1 ? rankedFeatures[0].item : null
 
   const editingFeature =
     form.mode === 'edit' ? features.find((feature) => feature.id === form.id) : undefined
@@ -125,9 +131,13 @@ function App() {
             />
           )}
 
-          <BacklogSummary featureCount={features.length} />
+          <BacklogSummary
+            featureCount={features.length}
+            scoredCount={scoredCount}
+            topFeatureName={topFeature?.name ?? null}
+          />
           <BacklogTable
-            features={features}
+            rankedFeatures={rankedFeatures}
             editingId={editingFeature?.id ?? null}
             onEdit={openEditForm}
             confirmDeleteId={confirmDeleteId}
@@ -137,7 +147,7 @@ function App() {
         </section>
       </main>
 
-      <footer className="site-footer muted">Decidra · Phase 2 preview</footer>
+      <footer className="site-footer muted">Decidra · Phase 3 preview</footer>
     </div>
   )
 }
