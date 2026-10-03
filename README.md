@@ -2,7 +2,7 @@
 
 From possibilities to priorities. A simple RICE prioritization app for Product Managers.
 
-![Decidra Phase 3](docs/screenshots/phase3-ranking.png)
+![Decidra Phase 4](docs/screenshots/phase4-decision.png)
 
 ## Run it locally
 
@@ -18,19 +18,24 @@ npm run dev     # start the app, then open http://localhost:5173
 ```bash
 npm run lint    # looks for common code mistakes
 npm run build   # type-checks the code and builds a production version
-npm test        # runs the RICE scoring tests
+npm test        # runs the scoring and decision-support tests
 ```
 
 ## Project layout
 
 - `src/App.tsx`: the page layout
-- `src/components/`: the RICE explainer, backlog summary, backlog table and add/edit feature form
+- `src/components/`: the RICE explainer, backlog summary, backlog table, add/edit feature form and decision panel
 - `src/data/sampleFeatures.ts`: the three GymBuddy sample features
 - `src/types.ts`: the shape of a feature, including its RICE inputs
 - `src/riceOptions.ts`: the Impact and Confidence choices and the Reach time period
 - `src/featureValidation.ts`: the form checks and their error messages
 - `src/riceScoring.ts`: the RICE calculation, ranking and tie-breaking (no React code)
 - `src/riceScoring.test.ts`: tests for the scoring engine
+- `src/assumptionChecks.ts`: the five assumption checks and their messages
+- `src/sensitivity.ts`: "what if confidence changed?" scenarios
+- `src/pmDecision.ts`: accepting the suggested rank or setting a manual priority with a reason
+- `src/decisionSupport.test.ts`: tests for the checks, scenarios and decisions
+- `src/components/FeatureInsights.tsx`: the per-feature decision panel
 - `src/index.css`: all styles (plain CSS, coral accent)
 
 ## Status
@@ -38,3 +43,4 @@ npm test        # runs the RICE scoring tests
 - Phase 1: foundation (page layout, RICE explainer, sample backlog).
 - Phase 2: add, edit and delete features with RICE inputs (Reach per quarter, Impact, Confidence, Effort in person-months) and helpful error messages. Changes reset on page reload. No scoring, saving, AI or exports yet.
 - Phase 3: RICE scores calculated instantly, with the working shown, a live score while you type, and features ranked highest first. Ties go to lower effort, then higher confidence, then the order features were added. Changes still reset on page reload.
+- Phase 4: explainable decision support. Each feature shows its RICE score, suggested rank, final PM priority, assumption flags and override reason. Five gentle checks flag 100% confidence without evidence (an empty note or one starting "Assumption"), every feature rated maximum impact, effort under 0.5 person-months, zero reach, and dependency or override notes. "What if" scenarios show how the score and rank would move at each other confidence level. The PM can accept the suggested rank or set a manual priority with a required reason; this never changes the RICE score. Decisions still reset on page reload.
