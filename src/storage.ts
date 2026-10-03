@@ -5,6 +5,7 @@
 // blocked site data) or full, so every read and write here is wrapped and never throws.
 
 import { CONFIDENCE_OPTIONS, IMPACT_OPTIONS, STATUS_OPTIONS } from './riceOptions'
+import { capManualPriorities } from './pmDecision'
 import type { PmDecision } from './pmDecision'
 import type { Feature } from './types'
 
@@ -140,17 +141,14 @@ export function loadState(storage: KeyValueStorage | null): LoadResult {
 
   // Only keep decisions for features that still exist. Manual priorities above the number of
   // features are capped, so the priority always stays in the allowed range.
-  const decisions: Record<string, PmDecision> = {}
+  const readable: Record<string, PmDecision> = {}
   if (isRecord(parsed.decisions)) {
     for (const [id, value] of Object.entries(parsed.decisions)) {
       const decision = readDecision(value)
-      if (!decision || !seen.has(id)) continue
-      decisions[id] =
-        decision.kind === 'manual'
-          ? { ...decision, priority: Math.min(decision.priority, Math.max(1, features.length)) }
-          : decision
+      if (decision && seen.has(id)) readable[id] = decision
     }
   }
+  const decisions = capManualPriorities(readable, features.length)
 
   // Never hand out an ID that is already used, even if the saved counter is missing or too low.
   const highestId = Math.max(0, ...features.map((f) => idNumber(f.id)))

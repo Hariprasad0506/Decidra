@@ -461,6 +461,9 @@ textarea.input {
 
 .table-wrap {
   container-type: inline-size;
+  /* Keeps the hidden screen-reader labels inside the table's own scroll area, so they cannot
+     widen the whole page on tablet-sized screens. */
+  position: relative;
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: 10px;

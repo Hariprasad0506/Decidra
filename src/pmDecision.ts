@@ -19,6 +19,21 @@ export function finalPriority(decision: PmDecision | undefined, suggestedRank: n
   return decision.priority
 }
 
+// Manual priorities run from 1 to the number of features. When features are removed, any manual
+// priority above the new count is lowered to the last place, so the saved data and the screen agree.
+export function capManualPriorities(
+  decisions: Readonly<Record<string, PmDecision>>,
+  featureCount: number,
+): Record<string, PmDecision> {
+  const max = Math.max(1, featureCount)
+  const capped: Record<string, PmDecision> = {}
+  for (const [id, decision] of Object.entries(decisions)) {
+    capped[id] =
+      decision.kind === 'manual' && decision.priority > max ? { ...decision, priority: max } : decision
+  }
+  return capped
+}
+
 export type ManualPriorityErrors = { priority?: string; reason?: string }
 
 // Checks the manual-priority form. Priorities run from 1 (do first) to the number of features.
