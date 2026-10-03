@@ -18,6 +18,8 @@ function App() {
   const [nextIdNumber, setNextIdNumber] = useState(sampleFeatures.length + 1)
   const [form, setForm] = useState<FormState>({ mode: 'closed' })
   const [message, setMessage] = useState('')
+  // The feature waiting for the user to confirm deletion, if any.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const editingFeature =
     form.mode === 'edit' ? features.find((feature) => feature.id === form.id) : undefined
@@ -55,9 +57,8 @@ function App() {
 
   function handleDelete(id: string) {
     const feature = features.find((f) => f.id === id)
+    setConfirmDeleteId(null)
     if (!feature) return
-    const confirmed = window.confirm(`Delete “${feature.name}”? This cannot be undone.`)
-    if (!confirmed) return
     setFeatures((current) => current.filter((f) => f.id !== id))
     if (form.mode === 'edit' && form.id === id) closeForm()
     setMessage(`Deleted “${feature.name}”.`)
@@ -129,6 +130,8 @@ function App() {
             features={features}
             editingId={editingFeature?.id ?? null}
             onEdit={openEditForm}
+            confirmDeleteId={confirmDeleteId}
+            onAskDelete={setConfirmDeleteId}
             onDelete={handleDelete}
           />
         </section>

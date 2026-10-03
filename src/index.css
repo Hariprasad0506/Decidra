@@ -299,6 +299,20 @@ textarea {
   background: #fdecea;
 }
 
+.confirm-delete {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.confirm-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
 /* Add / edit feature form */
 .feature-form {
   margin-top: 20px;

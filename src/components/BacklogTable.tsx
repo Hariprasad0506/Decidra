@@ -4,13 +4,22 @@ import type { Feature } from '../types'
 interface BacklogTableProps {
   features: Feature[]
   editingId: string | null
+  confirmDeleteId: string | null
   onEdit: (id: string) => void
+  onAskDelete: (id: string | null) => void
   onDelete: (id: string) => void
 }
 
 const numberFormat = new Intl.NumberFormat('en-US')
 
-export function BacklogTable({ features, editingId, onEdit, onDelete }: BacklogTableProps) {
+export function BacklogTable({
+  features,
+  editingId,
+  confirmDeleteId,
+  onEdit,
+  onAskDelete,
+  onDelete,
+}: BacklogTableProps) {
   if (features.length === 0) {
     return <p className="empty">Your backlog is empty. Add a feature to get started.</p>
   }
@@ -67,22 +76,40 @@ export function BacklogTable({ features, editingId, onEdit, onDelete }: BacklogT
                 </span>
               </td>
               <td className="cell-actions">
-                <button
-                  type="button"
-                  className="button-link"
-                  aria-label={`Edit ${feature.name}`}
-                  onClick={() => onEdit(feature.id)}
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="button-link danger"
-                  aria-label={`Delete ${feature.name}`}
-                  onClick={() => onDelete(feature.id)}
-                >
-                  Delete
-                </button>
+                {confirmDeleteId === feature.id ? (
+                  <span className="confirm-delete" role="group" aria-label="Confirm delete">
+                    <span className="confirm-text">Delete this feature?</span>
+                    <button
+                      type="button"
+                      className="button-link danger"
+                      onClick={() => onDelete(feature.id)}
+                    >
+                      Yes, delete
+                    </button>
+                    <button type="button" className="button-link" onClick={() => onAskDelete(null)}>
+                      Keep
+                    </button>
+                  </span>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="button-link"
+                      aria-label={`Edit ${feature.name}`}
+                      onClick={() => onEdit(feature.id)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="button-link danger"
+                      aria-label={`Delete ${feature.name}`}
+                      onClick={() => onAskDelete(feature.id)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
               </td>
             </tr>
           ))}
