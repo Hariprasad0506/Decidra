@@ -2,51 +2,93 @@
 
 From possibilities to priorities. A simple RICE prioritization app for Product Managers.
 
-![Decidra Phase 5](docs/screenshots/phase5-save-share.png)
+![Decidra](docs/screenshots/phase5-save-share.png)
 
-## Run it locally
+## What it does
 
-You need Node.js 20 or newer (https://nodejs.org).
+Decidra helps a Product Manager decide what to build next.
 
-```bash
-npm install     # download the building blocks (one time)
-npm run dev     # start the app, then open http://localhost:5173
+- Add, edit and delete features, each with RICE inputs and an evidence note.
+- Every feature gets a RICE score, with the working shown, and a suggested rank (highest score first).
+- Gentle **assumption flags** point out estimates worth double-checking, such as 100% confidence with no real evidence.
+- **"What if confidence changed?"** shows how a feature's score and rank would move at other confidence levels.
+- The PM can accept the suggested rank or set a **manual priority with a reason**. This never changes the RICE score.
+- Everything is **saved in the browser** and comes back after a reload.
+- **Export CSV** downloads the whole backlog, and a short stakeholder summary is written from fixed rules (no AI).
+
+It opens with three GymBuddy sample features so there is something to explore straight away.
+
+## The RICE formula
+
+```
+RICE score = (Reach × Impact × Confidence) ÷ Effort
 ```
 
-## Checks
+| Input | Meaning | Values |
+|---|---|---|
+| Reach | Users affected per quarter | Any number, 0 or more |
+| Impact | How much it helps each user | 3 Massive, 2 High, 1 Medium, 0.5 Low, 0.25 Minimal |
+| Confidence | How sure you are of the estimates | 100% Strong, 80% Some, 50% Weak evidence |
+| Effort | Work needed, in person-months | Any number above 0 |
+
+Example: Beginner Workout Planner = 2,000 × 2 × 0.8 ÷ 3 = **1,066.67**.
+Ties go to lower effort, then higher confidence, then the order features were added.
+
+## Install
+
+You need Node.js 20 or newer (https://nodejs.org). In the project folder, run once:
 
 ```bash
+npm install
+```
+
+## Start the app
+
+```bash
+npm run dev
+```
+
+Then open **http://localhost:5173** in your browser.
+
+## Run the tests
+
+```bash
+npm test        # scoring, decision support, saving, export and QA regression tests
 npm run lint    # looks for common code mistakes
 npm run build   # type-checks the code and builds a production version
-npm test        # runs the scoring, decision-support, saving and export tests
 ```
+
+## Reset the demo
+
+Scroll to the **Results** card, click **Reset Demo Data**, then **Yes, reset**. This removes your changes
+and brings back the three GymBuddy features. (Clearing the site's data in the browser does the same.)
+
+## Known limitations
+
+- Data lives only in this browser on this device. There are no accounts, no sharing and no sync.
+- One person, one backlog at a time.
+- Reach is always counted per quarter; the time period can't be changed.
+- "What if" scenarios only vary confidence, one feature at a time.
+- Assumption flags and the stakeholder summary follow fixed rules; they don't understand the meaning of your notes.
+- There is no undo, apart from resetting to the demo data.
+- Some embedded previews block file downloads, so CSV export needs the app open in a normal browser tab.
+
+## Optional future enhancements
+
+- Import a backlog from CSV.
+- Other scoring methods (ICE, MoSCoW, weighted scoring) alongside RICE.
+- Several backlogs or projects.
+- "What if" scenarios for reach, impact and effort.
+- Undo for edits and deletes.
+- A shareable read-only link or PDF of the ranked backlog.
 
 ## Project layout
 
 - `src/App.tsx`: the page layout
-- `src/components/`: the RICE explainer, backlog summary, backlog table, add/edit feature form and decision panel
+- `src/components/`: the RICE explainer, backlog summary and table, add/edit form, decision panel, and save/export card
 - `src/data/sampleFeatures.ts`: the three GymBuddy sample features
-- `src/types.ts`: the shape of a feature, including its RICE inputs
-- `src/riceOptions.ts`: the Impact and Confidence choices and the Reach time period
-- `src/featureValidation.ts`: the form checks and their error messages
-- `src/riceScoring.ts`: the RICE calculation, ranking and tie-breaking (no React code)
-- `src/riceScoring.test.ts`: tests for the scoring engine
-- `src/assumptionChecks.ts`: the five assumption checks and their messages
-- `src/sensitivity.ts`: "what if confidence changed?" scenarios
-- `src/pmDecision.ts`: accepting the suggested rank or setting a manual priority with a reason
-- `src/decisionSupport.test.ts`: tests for the checks, scenarios and decisions
-- `src/components/FeatureInsights.tsx`: the per-feature decision panel
-- `src/storage.ts`: saving and restoring the backlog and decisions in the browser (localStorage)
-- `src/csvExport.ts`: the CSV export, with safe escaping
-- `src/stakeholderSummary.ts`: the rule-based stakeholder summary (no AI)
-- `src/persistenceExport.test.ts`: tests for saving, the CSV export and the summary
-- `src/components/SaveAndExport.tsx`: the save status, export, summary and reset card
-- `src/index.css`: all styles (plain CSS, coral accent)
-
-## Status
-
-- Phase 1: foundation (page layout, RICE explainer, sample backlog).
-- Phase 2: add, edit and delete features with RICE inputs (Reach per quarter, Impact, Confidence, Effort in person-months) and helpful error messages. Changes reset on page reload. No scoring, saving, AI or exports yet.
-- Phase 3: RICE scores calculated instantly, with the working shown, a live score while you type, and features ranked highest first. Ties go to lower effort, then higher confidence, then the order features were added. Changes still reset on page reload.
-- Phase 4: explainable decision support. Each feature shows its RICE score, suggested rank, final PM priority, assumption flags and override reason. Five gentle checks flag 100% confidence without evidence (an empty note or one starting "Assumption"), every feature rated maximum impact, effort under 0.5 person-months, zero reach, and dependency or override notes. "What if" scenarios show how the score and rank would move at each other confidence level. The PM can accept the suggested rank or set a manual priority with a required reason; this never changes the RICE score. Decisions still reset on page reload.
-- Phase 5: persistence and export. The backlog and PM decisions are saved in this browser automatically and restored on reload; the GymBuddy sample data is used only when nothing is saved. "Reset Demo Data" (with confirmation) brings the sample back. "Export CSV" downloads every feature with its RICE inputs, score, suggested rank, PM priority, evidence note, assumption flags and override reason; text that a spreadsheet could run as a formula is made safe. A short stakeholder summary, written from fixed rules, names the top features, their scores, flagged assumptions and PM overrides. If the browser blocks or fills up its storage, the app keeps working and says changes will not be kept.
+- `src/riceScoring.ts`: the RICE calculation, ranking and tie-breaking
+- `src/assumptionChecks.ts`, `src/sensitivity.ts`, `src/pmDecision.ts`: assumption flags, "what if" scenarios and PM decisions
+- `src/storage.ts`, `src/csvExport.ts`, `src/stakeholderSummary.ts`: saving, CSV export and the summary
+- `src/*.test.ts`: automated tests
+- `docs/phase6-qa-report.md`: the quality assurance report
