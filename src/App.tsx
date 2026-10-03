@@ -159,7 +159,7 @@ function App() {
     const ok = downloadCsv(buildCsv(features, decisions), csvFileName(new Date()))
     setMessage(
       ok
-        ? 'Exported the backlog as a CSV file. Check your downloads.'
+        ? 'Exported the backlog as a CSV file. Check your downloads. If no file appears, this page is blocking downloads, so open the app in a normal browser tab.'
         : 'The browser would not start the download. Try again in a normal browser tab.',
     )
   }
