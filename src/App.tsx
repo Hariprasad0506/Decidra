@@ -1,13 +1,68 @@
 import { useState } from 'react'
 import { BacklogSummary } from './components/BacklogSummary'
 import { BacklogTable } from './components/BacklogTable'
+import { FeatureForm } from './components/FeatureForm'
 import { RiceExplainer } from './components/RiceExplainer'
 import { sampleFeatures } from './data/sampleFeatures'
+import { emptyFormValues, featureToFormValues, formatFeatureId } from './featureValidation'
+import type { Feature } from './types'
+
+// Which form is open: none, a blank "add" form, or an "edit" form for one feature.
+type FormState = { mode: 'closed' } | { mode: 'add' } | { mode: 'edit'; id: string }
 
 function App() {
-  // Phase 1 shows sample data only. Adding and saving features arrives in Phase 2.
-  const features = sampleFeatures
-  const [showAddNotice, setShowAddNotice] = useState(false)
+  // The feature list lives in React state for now. It resets when the page reloads;
+  // saving in the browser arrives in a later phase.
+  const [features, setFeatures] = useState<Feature[]>(sampleFeatures)
+  // Running counter for new IDs, so a deleted feature's ID is never handed out again.
+  const [nextIdNumber, setNextIdNumber] = useState(sampleFeatures.length + 1)
+  const [form, setForm] = useState<FormState>({ mode: 'closed' })
+  const [message, setMessage] = useState('')
+  // The feature waiting for the user to confirm deletion, if any.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+
+  const editingFeature =
+    form.mode === 'edit' ? features.find((feature) => feature.id === form.id) : undefined
+
+  function openAddForm() {
+    setMessage('')
+    setForm({ mode: 'add' })
+  }
+
+  function openEditForm(id: string) {
+    setMessage('')
+    setForm({ mode: 'edit', id })
+    document.getElementById('backlog-heading')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  function closeForm() {
+    setForm({ mode: 'closed' })
+  }
+
+  function handleSave(details: Omit<Feature, 'id'>) {
+    if (form.mode === 'add') {
+      const id = formatFeatureId(nextIdNumber)
+      setFeatures((current) => [...current, { id, ...details }])
+      setNextIdNumber((n) => n + 1)
+      setMessage(`Added “${details.name}” as ${id}.`)
+    } else if (form.mode === 'edit') {
+      const id = form.id
+      setFeatures((current) =>
+        current.map((feature) => (feature.id === id ? { id, ...details } : feature)),
+      )
+      setMessage(`Saved changes to “${details.name}”.`)
+    }
+    closeForm()
+  }
+
+  function handleDelete(id: string) {
+    const feature = features.find((f) => f.id === id)
+    setConfirmDeleteId(null)
+    if (!feature) return
+    setFeatures((current) => current.filter((f) => f.id !== id))
+    if (form.mode === 'edit' && form.id === id) closeForm()
+    setMessage(`Deleted “${feature.name}”.`)
+  }
 
   return (
     <div className="page">
@@ -37,30 +92,52 @@ function App() {
               <p className="eyebrow">GymBuddy</p>
               <h2 id="backlog-heading">Feature backlog</h2>
             </div>
-            <button
-              type="button"
-              className="button-primary"
-              aria-expanded={showAddNotice}
-              aria-controls="add-feature-notice"
-              onClick={() => setShowAddNotice((open) => !open)}
-            >
-              <span aria-hidden="true">+</span> Add Feature
-            </button>
+            {form.mode !== 'add' && (
+              <button type="button" className="button-primary" onClick={openAddForm}>
+                <span aria-hidden="true">+</span> Add Feature
+              </button>
+            )}
           </div>
 
-          {showAddNotice && (
-            <p id="add-feature-notice" className="notice" role="status">
-              Adding your own features is coming in the next phase. For now, explore the GymBuddy
-              samples below.
-            </p>
+          <p className="notice" role="status" hidden={message === ''}>
+            {message}
+          </p>
+
+          {form.mode === 'add' && (
+            <FeatureForm
+              key="add"
+              mode="add"
+              featureId={formatFeatureId(nextIdNumber)}
+              initialValues={emptyFormValues}
+              onSave={handleSave}
+              onCancel={closeForm}
+            />
+          )}
+
+          {editingFeature && (
+            <FeatureForm
+              key={editingFeature.id}
+              mode="edit"
+              featureId={editingFeature.id}
+              initialValues={featureToFormValues(editingFeature)}
+              onSave={handleSave}
+              onCancel={closeForm}
+            />
           )}
 
           <BacklogSummary featureCount={features.length} />
-          <BacklogTable features={features} />
+          <BacklogTable
+            features={features}
+            editingId={editingFeature?.id ?? null}
+            onEdit={openEditForm}
+            confirmDeleteId={confirmDeleteId}
+            onAskDelete={setConfirmDeleteId}
+            onDelete={handleDelete}
+          />
         </section>
       </main>
 
-      <footer className="site-footer muted">Decidra · Phase 1 preview</footer>
+      <footer className="site-footer muted">Decidra · Phase 2 preview</footer>
     </div>
   )
 }
