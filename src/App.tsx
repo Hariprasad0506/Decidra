@@ -9,7 +9,7 @@ import { sampleFeatures } from './data/sampleFeatures'
 import { rankByRice } from './riceScoring'
 import type { RankedItem } from './riceScoring'
 import { checkBacklog, everyFeatureHasMaxImpact } from './assumptionChecks'
-import { finalPriority, orderByFinalPriority, samePriorityAs } from './pmDecision'
+import { capManualPriorities, finalPriority, orderByFinalPriority, samePriorityAs } from './pmDecision'
 import type { PmDecision } from './pmDecision'
 import { confidenceSensitivity } from './sensitivity'
 import { emptyFormValues, featureToFormValues, formatFeatureId } from './featureValidation'
@@ -185,7 +185,8 @@ function App() {
     setDecisions((current) => {
       const next = { ...current }
       delete next[id]
-      return next
+      // Same rule as when the backlog is reloaded, so a reload never changes a decision.
+      return capManualPriorities(next, features.length - 1)
     })
     if (reviewId === id) setReviewId(null)
     if (form.mode === 'edit' && form.id === id) closeForm()
