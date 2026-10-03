@@ -1,8 +1,10 @@
 interface BacklogSummaryProps {
   featureCount: number
+  scoredCount: number
+  topFeatureName: string | null
 }
 
-export function BacklogSummary({ featureCount }: BacklogSummaryProps) {
+export function BacklogSummary({ featureCount, scoredCount, topFeatureName }: BacklogSummaryProps) {
   const label = featureCount === 1 ? 'feature' : 'features'
 
   return (
@@ -12,9 +14,15 @@ export function BacklogSummary({ featureCount }: BacklogSummaryProps) {
         <span className="summary-label">{label} in backlog</span>
       </div>
       <div className="summary-item">
-        <span className="summary-value">0</span>
+        <span className="summary-value">{scoredCount}</span>
         <span className="summary-label">scored with RICE</span>
       </div>
+      {topFeatureName && (
+        <div className="summary-item">
+          <span className="summary-label">Suggested first:</span>
+          <span className="summary-top">{topFeatureName}</span>
+        </div>
+      )}
     </section>
   )
 }
